@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DigiCart Admin Panel</title>
+
+<style>
+body {
+  margin:0;
+  background:#111;
+  color:#fff;
+  font-family:Arial, sans-serif;
+}
+
+/* Top Header */
+header {
+  background:#1a1a1a;
+  padding:15px 25px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-bottom:1px solid #333;
+}
+header h2 { color:#f5c542; margin:0; font-size:20px; }
+header a {
+  color:#f5c542;
+  text-decoration:none;
+  font-weight:bold;
+}
+
+/* Main Content */
+.main {
+  padding:25px;
+}
+
+/* Table */
+.table-wrapper { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; min-width:600px; margin-top:15px; }
+th, td { border:1px solid #333; padding:10px; text-align:left; }
+button { padding:6px 10px; background:#f5c542; border:none; cursor:pointer; border-radius:4px; }
+button:hover { opacity:0.9; }
+</style>
+
+</head>
+<body>
+
+<header>
+  <h2>Admin | Sonal</h2>
+  <a href="/admin/logout">Logout</a>
+</header>
+
+<div class="main">
+  <h2>Products</h2>
+<button id="addBtn">+ Add Product</button>
+
+  <div class="table-wrapper">
+    <table id="productTable">
+      <tr><th>Name</th><th>Price</th><th>Actions</th></tr>
+    </table>
+  </div>
+</div>
+<script>
+fetch('/catalog')
+.then(res => res.json())
+.then(data => {
+  const table = document.getElementById("productTable");
+  Object.entries(data).forEach(([sku, item]) => {
+    table.innerHTML += `
+      <tr>
+        <td>${item.title}</td>
+        <td>₹${item.amount/100}</td>
+        <td><button onclick="editPrice('${sku}', ${item.amount/100})">Edit</button></td>
+      </tr>
+    `;
+  });
+});
+</script>
+
+<script>
+function editPrice(sku, oldPrice){
+  const newPrice = prompt("Enter new price (₹):", oldPrice);
+  if(newPrice === null || newPrice.trim() === "") return;
+
+  fetch("/update-price", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `sku=${sku}&newPrice=${newPrice}`
+  }).then(res => res.text())
+  .then(data => {
+    if(data === "OK"){
+      alert("✅ Price Updated!");
+      location.reload();
+    } else {
+      alert("❌ Failed: " + data);
+    }
+  });
+}
+</script>
+<script>
+// Open modal
+document.getElementById("addBtn").onclick = () => {
+  document.getElementById("modal").style.display = "flex";
+};
+
+// Close modal
+function closeModal(){
+  document.getElementById("modal").style.display = "none";
+}
+
+// Save product
+function saveProduct(){
+  const title = document.getElementById("p_title").value;
+  const price = document.getElementById("p_price").value;
+  const url = document.getElementById("p_url").value;
+
+  if(!title || !price || !url) return alert("Please fill all fields");
+
+  fetch("/add-product", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `title=${title}&price=${price}&url=${url}`
+  }).then(res => res.text())
+  .then(data => {
+    if(data === "OK"){
+      alert("✅ Product Added Successfully!");
+      location.reload();
+    } else {
+      alert("❌ Failed: " + data);
+    }
+  });
+}
+</script>
+
+<!-- Add Product Modal -->
+<div id="modal" style="
+  display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.7); justify-content:center; align-items:center;">
+  
+  <div style="background:#222; padding:20px; border-radius:8px; width:300px;">
+    <h3>Add Product</h3>
+
+    <input id="p_title" placeholder="Product Title" style="width:100%; margin:6px 0; padding:8px;">
+    <input id="p_price" placeholder="Price (₹)" style="width:100%; margin:6px 0; padding:8px;">
+    <input id="p_url" placeholder="Download URL" style="width:100%; margin:6px 0; padding:8px;">
+
+    <button onclick="saveProduct()">Save</button>
+    <button onclick="closeModal()" style="background:#555;">Cancel</button>
+  </div>
+</div>
+</body>
+</html>

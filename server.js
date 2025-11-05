@@ -6,11 +6,18 @@ import jwt from 'jsonwebtoken';
 import path from 'path';
 import url from 'url';
 import dotenv from 'dotenv';
+import session from "express-session";
+import bcrypt from "bcrypt";
 
 dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(session({
+  secret: "sonal_admin_secure_key",
+  resave: false,
+  saveUninitialized: false
+}));
 
 // ====== CONFIG ======
 const PORT = process.env.PORT || 8080;
@@ -23,7 +30,8 @@ if (!KEY_ID || !KEY_SECRET) {
   console.error('Missing Razorpay keys. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env');
   process.exit(1);
 }
-
+const ADMIN_USERNAME = "Sonal";
+const ADMIN_PASSWORD_HASH = bcrypt.hashSync("Sonal@9599", 10);
 const razorpay = new Razorpay({ key_id: KEY_ID, key_secret: KEY_SECRET });
 
 // Map SKU → amount (INR, in paise) and protected download URL
@@ -99,8 +107,67 @@ app.get('/download', (req, res) => {
 
 // ====== Static hosting for frontend ======
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
+// ================= ADMIN LOGIN SYSTEM =================
+
+// Login Page (GET)
+app.get("/admin/login", (req, res) => {
+  if (req.session.loggedIn) return res.redirect("/admin");
+  res.sendFile(path.join(__dirname, "public/admin-login.html"));
+});
+
+// Login Form Submit (POST)
+app.post("/admin/login", express.urlencoded({ extended: true }), (req, res) => {
+  const { username, password } = req.body;
+  if (username === ADMIN_USERNAME && bcrypt.compareSync(password, ADMIN_PASSWORD_HASH)) {
+    req.session.loggedIn = true;
+    return res.redirect("/admin");
+  }
+  res.send("❌ Wrong Username or Password");
+});
+
+// Protected Admin Dashboard Page
+app.get("/admin", (req, res) => {
+  if (!req.session.loggedIn) return res.redirect("/admin/login");
+  res.sendFile(path.join(__dirname, "public/admin-dashboard.html"));
+});
+
+// Logout
+app.get("/admin/logout", (req, res) => {
+  req.session.destroy(() => res.redirect("/admin/login"));
+});
+
+app.get("/catalog", (req, res) => {
+  if (!req.session.loggedIn) return res.status(403).json({ error: "Unauthorized" });
+  res.json(CATALOG);
+});
+// ====== Update Price (Admin) ======
+app.post("/update-price", express.urlencoded({ extended: true }), (req, res) => {
+  if (!req.session.loggedIn) return res.status(403).send("Unauthorized");
+
+  const { sku, newPrice } = req.body;
+  if (!CATALOG[sku]) return res.send("Invalid SKU");
+
+  CATALOG[sku].amount = parseInt(newPrice) * 100; // Convert ₹ → paise
+  res.send("OK");
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.listen(PORT, () => {
   console.log(`DigiCart server running on ${PUBLIC_URL}`);
+});
+// ====== Add Product (Admin) ======
+app.post("/add-product", express.urlencoded({ extended: true }), (req, res) => {
+  if (!req.session.loggedIn) return res.status(403).send("Unauthorized");
+
+  const { title, price, url } = req.body;
+  const sku = `sku_${Date.now()}`;
+
+  CATALOG[sku] = {
+    title,
+    amount: parseInt(price) * 100,
+    url
+  };
+
+  res.send("OK");
 });
