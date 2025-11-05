@@ -28,7 +28,7 @@ const razorpay = new Razorpay({ key_id: KEY_ID, key_secret: KEY_SECRET });
 
 // Map SKU → amount (INR, in paise) and protected download URL
 const CATALOG = {
-  'eb-js-beg': { title: 'JavaScript for Beginners (e‑Book)', amount: 19900, url: 'https://drive.google.com/uc?export=download&id=YOUR_SAMPLE_ID1' },
+  'eb-js-beg': { title: 'JavaScript for Beginners (e‑Book)', amount: 1000, url: 'https://drive.google.com/uc?export=download&id=YOUR_SAMPLE_ID1' },
   'eb-python-pro': { title: 'Python Pro Handbook (e‑Book)', amount: 24900, url: 'https://drive.google.com/uc?export=download&id=YOUR_SAMPLE_ID2' },
   'pdf-dsa-kit': { title: 'DSA Crash Kit (PDF Notes)', amount: 17900, url: 'https://drive.google.com/uc?export=download&id=YOUR_SAMPLE_ID3' },
   'sw-win-tool': { title: 'Win Optimizer Tool', amount: 29900, url: 'https://example.com/your-app.zip' },
