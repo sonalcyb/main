@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Thank you • DigiCart</title>
+  <style>body{font-family:system-ui,Segoe UI,Roboto;margin:0;background:#0b0b0f;color:#f5f7fa;display:grid;place-items:center;height:100vh} .box{max-width:640px;background:#121218;border:1px solid rgba(245,197,66,.2);border-radius:16px;padding:24px} .btn{display:inline-block;margin-top:12px;padding:10px 14px;background:#f5c542;color:#111;border-radius:10px;text-decoration:none;font-weight:700} .muted{color:#9ca3af;font-size:14px}</style>
+</head>
+<body>
+  <div class="box">
+    <h2>Payment successful ✅</h2>
+    <p>Your secure download link is ready. It expires in <strong>1 hour</strong>.</p>
+    <a id="dl" class="btn" href="#" target="_blank" rel="noopener">Download now</a>
+    <p class="muted">If the link expires, contact support to reissue.</p>
+  </div>
+  <script>
+    const url = new URL(window.location.href);
+    const d = url.searchParams.get('download');
+    if(!d){ document.querySelector('.box').innerHTML='<h2>Missing link</h2><p class="muted">No download link found.</p>'; }
+    else { document.getElementById('dl').href = d; }
+  </script>
+</body>
+</html>
